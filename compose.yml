@@ -1,7 +1,7 @@
 services:
 
   mongodb-primary:
-    image: mongo:6.0.5
+    image: mongo:latest
     container_name: mongodb-primary
     hostname: mongodb-primary
     command: mongod --replSet replset --auth --keyFile /etc/mongod-keyfile
@@ -22,9 +22,12 @@ services:
     networks:
       - replset
     restart: always
+    depends_on:
+      - mongodb-secondary
+      - mongodb-arbiter
 
   mongodb-secondary:
-    image: mongo:6.0.5
+    image: mongo:latest
     container_name: mongodb-secondary
     hostname: mongodb-secondary
     command: mongod --replSet replset --auth --keyFile /etc/mongod-keyfile
@@ -42,7 +45,7 @@ services:
     restart: always
 
   mongodb-arbiter:
-    image: mongo:6.0.5
+    image: mongo:latest
     container_name: mongodb-arbiter
     hostname: mongodb-arbiter
     command: mongod --replSet replset --auth --keyFile /etc/mongod-keyfile
@@ -60,6 +63,4 @@ services:
 
 networks:
   replset:
-    ipam:
-      config:
-      - subnet: 192.168.0.0/24
+    driver: bridge
