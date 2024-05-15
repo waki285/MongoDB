@@ -1,0 +1,65 @@
+services:
+
+  mongodb-primary:
+    image: mongo:6.0.5
+    container_name: mongodb-primary
+    hostname: mongodb-primary
+    command: mongod --replSet replset --auth --keyFile /etc/mongod-keyfile
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      # データの永続化
+      - ./data/primary:/data/db
+      # 初期化スクリプトの配置
+      - ./etc/init/:/docker-entrypoint-initdb.d/:ro
+      # 認証鍵（キーファイル）配置
+      - ./etc/mongod-keyfile:/etc/mongod-keyfile:ro
+    expose:
+    - 27017
+    ports:
+      - 27011:27017
+    networks:
+      - replset
+    restart: always
+
+  mongodb-secondary:
+    image: mongo:6.0.5
+    container_name: mongodb-secondary
+    hostname: mongodb-secondary
+    command: mongod --replSet replset --auth --keyFile /etc/mongod-keyfile
+    volumes:
+      # データの永続化
+      - ./data/secondary:/data/db
+      # 認証鍵（キーファイル）配置
+      - ./etc/mongod-keyfile:/etc/mongod-keyfile:ro
+    expose:
+    - 27017
+    ports:
+      - 27012:27017
+    networks:
+      - replset
+    restart: always
+
+  mongodb-arbiter:
+    image: mongo:6.0.5
+    container_name: mongodb-arbiter
+    hostname: mongodb-arbiter
+    command: mongod --replSet replset --auth --keyFile /etc/mongod-keyfile
+    volumes:
+      # arbiterはデータを保持しないため、データの永続化は不要
+      # 認証鍵（キーファイル）配置
+      - ./etc/mongod-keyfile:/etc/mongod-keyfile:ro
+    expose:
+    - 27017
+    ports:
+      - 27013:27017
+    networks:
+      - replset
+    restart: always
+
+networks:
+  replset:
+    ipam:
+      config:
+      - subnet: 192.168.0.0/24
